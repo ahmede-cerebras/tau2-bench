@@ -142,13 +142,10 @@ class Tool(BaseTool):
         2. Inject 'properties': {} if it doesn't exist
         """
         if isinstance(schema, dict):
-            # Process current level
             if schema.get("type") == "object":
-                # Set additionalProperties to False if it exists
                 if "additionalProperties" in schema:
                     schema["additionalProperties"] = False
-                
-                # Inject properties: {} if it doesn't exist
+
                 if "properties" not in schema:
                     schema["properties"] = {}
             

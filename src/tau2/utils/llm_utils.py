@@ -199,10 +199,16 @@ def generate(
     if kwargs.get("num_retries") is None:
         kwargs["num_retries"] = DEFAULT_MAX_RETRIES
 
+    strict = kwargs.pop("strict", False)
+
     if model.startswith("claude") and not ALLOW_SONNET_THINKING:
         kwargs["thinking"] = {"type": "disabled"}
     litellm_messages = to_litellm_messages(messages)
     tools = [tool.openai_schema for tool in tools] if tools else None
+    if tools and strict:
+        for tool in tools:
+            if "function" in tool:
+                tool["function"]["strict"] = strict
     if tools and tool_choice is None:
         tool_choice = "auto"
     try:
