@@ -13,7 +13,7 @@ from tau2.data_model.simulation import (AgentInfo, Info, Results, RunConfig,
 from tau2.data_model.tasks import Task
 from tau2.environment.environment import Environment, EnvironmentInfo
 from tau2.evaluator.evaluator import EvaluationType, evaluate_simulation
-from tau2.metrics.agent_metrics import compute_metrics
+from tau2.metrics.agent_metrics import compute_metrics, save_metrics
 from tau2.orchestrator.orchestrator import Orchestrator
 from tau2.registry import RegistryInfo, registry
 from tau2.user.user_simulator import DummyUser, get_global_user_sim_guidelines
@@ -134,6 +134,8 @@ def run_domain(config: RunConfig) -> Results:
         log_level=config.log_level,
     )
     metrics = compute_metrics(simulation_results)
+    if config.save_result_metrics:
+        save_metrics(metrics, save_to.stem)
     ConsoleDisplay.display_agent_metrics(metrics)
 
     return simulation_results

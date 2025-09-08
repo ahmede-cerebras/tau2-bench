@@ -132,6 +132,13 @@ class RunConfig(BaseModel):
             default=DEFAULT_SAVE_TO,
         ),
     ]
+    save_result_metrics: Annotated[
+        Optional[bool],
+        Field(
+            description="Whether to save the result metrics after the simulation",
+            default=False,
+        ),
+    ]
     max_concurrency: Annotated[
         int,
         Field(

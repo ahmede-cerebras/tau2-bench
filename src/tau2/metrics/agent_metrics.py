@@ -1,3 +1,4 @@
+import json
 import math
 import re
 
@@ -6,7 +7,7 @@ from loguru import logger
 from pydantic import BaseModel
 
 from tau2.data_model.simulation import Results
-
+from tau2.utils.utils import DATA_DIR
 
 def is_successful(reward: float) -> bool:
     """
@@ -130,14 +131,30 @@ def display_metrics(metrics: AgentMetrics) -> None:
         print(f"  k={k}: {pass_hat_k}")
     print(f"💰 Average agent cost: {metrics.avg_agent_cost}")
 
+def save_metrics(metrics: AgentMetrics, save_to: str) -> None:
+    results_dir = DATA_DIR / "simulation_results"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    
+    save_path = results_dir / f"{save_to}.json"
+    with open(save_path, 'w') as f:
+        json.dump(metrics.as_dict(), f, indent=2)
+    
+    print(f"💾 Metrics saved to: {save_path}")
 
 if __name__ == "__main__":
     import argparse
+    import json
     from pathlib import Path
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--results", type=str, required=True)
+    parser.add_argument("--save-to", type=str, help="Save metrics to DATA_DIR/results/<save_to>.json")
     args = parser.parse_args()
+    
     results = Results.load(Path(args.results))
     metrics = compute_metrics(results)
     display_metrics(metrics)
+    
+    # Save metrics if --save-to is provided
+    if args.save_to:
+        save_metrics(metrics, args.save_to)
