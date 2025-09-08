@@ -148,7 +148,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--results", type=str, required=True)
-    parser.add_argument("--save-to", type=str, help="Save metrics to DATA_DIR/results/<save_to>.json")
+    parser.add_argument("--save-to", type=str, help="Save metrics to DATA_DIR/simulation_results/<save_to>.json")
     args = parser.parse_args()
     
     results = Results.load(Path(args.results))
