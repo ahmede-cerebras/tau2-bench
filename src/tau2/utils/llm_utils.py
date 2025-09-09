@@ -30,7 +30,7 @@ from tau2.data_model.message import (
 )
 from tau2.environment.tool import Tool
 
-# litellm._turn_on_debug()
+litellm._turn_on_debug()
 
 if USE_LANGFUSE:
     # set callbacks
@@ -196,18 +196,23 @@ def generate(
 
     Returns: A tuple containing the message and the cost.
     """
-    if kwargs.get("num_retries") is None:
-        kwargs["num_retries"] = DEFAULT_MAX_RETRIES
+    # Make a copy of kwargs for LLM arguments
+    llm_args = kwargs.copy()
+    
+    if llm_args.get("num_retries") is None:
+        llm_args["num_retries"] = DEFAULT_MAX_RETRIES
 
-    strict = kwargs.pop("strict", False)
-
+    strict = llm_args.pop("strict", False)
+    strict_schemas = llm_args.pop("strict_schemas", False)
     if model.startswith("claude") and not ALLOW_SONNET_THINKING:
-        kwargs["thinking"] = {"type": "disabled"}
+        llm_args["thinking"] = {"type": "disabled"}
     litellm_messages = to_litellm_messages(messages)
     tools = [tool.openai_schema for tool in tools] if tools else None
-    if tools and strict:
+    if tools and (strict or strict_schemas):
         for tool in tools:
-            if "function" in tool:
+            if strict_schemas:
+                tool = _process_schema_objects(tool)
+            if strict and "function" in tool:
                 tool["function"]["strict"] = strict
     if tools and tool_choice is None:
         tool_choice = "auto"
@@ -217,7 +222,7 @@ def generate(
             messages=litellm_messages,
             tools=tools,
             tool_choice=tool_choice,
-            **kwargs,
+            **llm_args,
         )
     except Exception as e:
         logger.error(e)
@@ -293,3 +298,29 @@ def get_token_usage(messages: list[Message]) -> dict:
         usage["completion_tokens"] += message.usage["completion_tokens"]
         usage["prompt_tokens"] += message.usage["prompt_tokens"]
     return usage
+
+def _process_schema_objects(schema: dict) -> dict:
+    """
+    Recursively process schema to find 'type': 'object' fields and:
+    1. Set 'additionalProperties' to False if it exists
+    2. Inject 'properties': {} if it doesn't exist
+    """
+    if isinstance(schema, dict):
+        if schema.get("type") == "object":
+            if "additionalProperties" in schema:
+                schema["additionalProperties"] = False
+
+            if "properties" not in schema:
+                schema["properties"] = {}
+        
+        # Recursively process all nested dictionaries
+        for key, value in schema.items():
+            if isinstance(value, dict):
+                schema[key] = _process_schema_objects(value)
+            elif isinstance(value, list):
+                schema[key] = [
+                    _process_schema_objects(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+    
+    return schema

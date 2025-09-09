@@ -135,37 +135,12 @@ class Tool(BaseTool):
         data["examples"] = doc.examples
         return data
 
-    def _process_schema_objects(self, schema: dict) -> dict:
-        """
-        Recursively process schema to find 'type': 'object' fields and:
-        1. Set 'additionalProperties' to False if it exists
-        2. Inject 'properties': {} if it doesn't exist
-        """
-        if isinstance(schema, dict):
-            if schema.get("type") == "object":
-                if "additionalProperties" in schema:
-                    schema["additionalProperties"] = False
-
-                if "properties" not in schema:
-                    schema["properties"] = {}
-            
-            # Recursively process all nested dictionaries
-            for key, value in schema.items():
-                if isinstance(value, dict):
-                    schema[key] = self._process_schema_objects(value)
-                elif isinstance(value, list):
-                    schema[key] = [
-                        self._process_schema_objects(item) if isinstance(item, dict) else item
-                        for item in value
-                    ]
-        
-        return schema
 
     @override
     @property
     def openai_schema(self) -> dict:
         """Get the OpenAI schema of the tool."""
-        schema = {
+        return {
             "type": "function",
             "function": {
                 "name": self.name,
@@ -173,7 +148,7 @@ class Tool(BaseTool):
                 "parameters": self.params.model_json_schema(),
             },
         }
-        return self._process_schema_objects(schema)
+
 
     def to_str(self) -> str:
         """Represent the tool as a string."""
