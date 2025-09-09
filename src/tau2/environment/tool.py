@@ -135,7 +135,6 @@ class Tool(BaseTool):
         data["examples"] = doc.examples
         return data
 
-
     @override
     @property
     def openai_schema(self) -> dict:
@@ -148,7 +147,6 @@ class Tool(BaseTool):
                 "parameters": self.params.model_json_schema(),
             },
         }
-
 
     def to_str(self) -> str:
         """Represent the tool as a string."""
