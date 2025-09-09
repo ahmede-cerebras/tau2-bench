@@ -30,7 +30,7 @@ from tau2.data_model.message import (
 )
 from tau2.environment.tool import Tool
 
-litellm._turn_on_debug()
+# litellm._turn_on_debug()
 
 if USE_LANGFUSE:
     # set callbacks
