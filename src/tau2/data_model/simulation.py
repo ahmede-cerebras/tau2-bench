@@ -182,10 +182,10 @@ class RunConfig(BaseModel):
         ),
     ]
     repetition_checker_llm_args: Annotated[
-        dict,
+        Optional[dict],
         Field(
             description="Arguments to pass to the repetition checker LLM",
-            default_factory=dict,
+            default=None,
         ),
     ]
 

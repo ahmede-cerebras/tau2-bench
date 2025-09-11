@@ -112,8 +112,7 @@ def add_run_args(parser):
     )
     parser.add_argument(
         "--save-result-metrics",
-        type=bool,
-        default=False,
+        action="store_true",
         help="Whether to save the result metrics after the simulation.",
     )
     parser.add_argument(
@@ -136,8 +135,7 @@ def add_run_args(parser):
     )
     parser.add_argument(
         "--use-repetition-checker",
-        type=bool,
-        default=False,
+        action="store_true",
         help="Enable LLM-based repetition detection following AA methodology.",
     )
     parser.add_argument(
@@ -155,7 +153,7 @@ def add_run_args(parser):
     parser.add_argument(
         "--repetition-checker-llm-args",
         type=json.loads,
-        default={},
+        default=None,
         help="Arguments to pass to the repetition checker LLM as JSON. Default is '{}'.",
     )
 
