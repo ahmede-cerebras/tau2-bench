@@ -134,6 +134,30 @@ def add_run_args(parser):
         default=DEFAULT_LOG_LEVEL,
         help=f"The log level to use for the simulation. Default is {DEFAULT_LOG_LEVEL}.",
     )
+    parser.add_argument(
+        "--use-repetition-checker",
+        type=bool,
+        default=False,
+        help="Enable LLM-based repetition detection following AA methodology.",
+    )
+    parser.add_argument(
+        "--repetition-checker-threshold",
+        type=int,
+        default=30,
+        help="Size of the rolling window of previous messages to check for repetition. Default is 30.",
+    )
+    parser.add_argument(
+        "--repetition-checker-llm",
+        type=str,
+        default="gpt-4.1",
+        help="The LLM model to use for repetition checking. Default is gpt-4.1.",
+    )
+    parser.add_argument(
+        "--repetition-checker-llm-args",
+        type=json.loads,
+        default={},
+        help="Arguments to pass to the repetition checker LLM as JSON. Default is '{}'.",
+    )
 
 
 def main():
@@ -164,6 +188,10 @@ def main():
                 max_concurrency=args.max_concurrency,
                 seed=args.seed,
                 log_level=args.log_level,
+                use_repetition_checker=args.use_repetition_checker,
+                repetition_checker_threshold=args.repetition_checker_threshold,
+                repetition_checker_llm=args.repetition_checker_llm,
+                repetition_checker_llm_args=args.repetition_checker_llm_args,
             )
         )
     )

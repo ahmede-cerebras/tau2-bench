@@ -160,6 +160,34 @@ class RunConfig(BaseModel):
             default=DEFAULT_LOG_LEVEL,
         ),
     ]
+    use_repetition_checker: Annotated[
+        bool,
+        Field(
+            description="Whether to use LLM-based repetition detection",
+            default=False,
+        ),
+    ]
+    repetition_checker_threshold: Annotated[
+        int,
+        Field(
+            description="Size of the rolling window of previous messages to check for repetition",
+            default=30,
+        ),
+    ]
+    repetition_checker_llm: Annotated[
+        str,
+        Field(
+            description="The LLM model to use for repetition checking",
+            default="gpt-4.1",
+        ),
+    ]
+    repetition_checker_llm_args: Annotated[
+        dict,
+        Field(
+            description="Arguments to pass to the repetition checker LLM",
+            default_factory=dict,
+        ),
+    ]
 
     def validate(self) -> None:
         """
@@ -312,6 +340,7 @@ class TerminationReason(str, Enum):
     AGENT_STOP = "agent_stop"
     MAX_STEPS = "max_steps"
     TOO_MANY_ERRORS = "too_many_errors"
+    REPETITION = "repetition"
 
 
 class SimulationRun(BaseModel):
