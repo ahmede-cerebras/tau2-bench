@@ -553,9 +553,9 @@ Conversation:
 Answer with only "yes" or "no"."""
 
         try:
-            self.repetition_checker_llm_args.pop("strict", None)
-            self.repetition_checker_llm_args.pop("strict_schemas", None)
-            model_cost = self.repetition_checker_llm_args.pop("model_cost", None)
+            self.repetition_checker_llm_args.pop("cerebras_strict", None)
+            self.repetition_checker_llm_args.pop("cerebras_strict_schemas", None)
+            model_cost = self.repetition_checker_llm_args.pop("litellm_model_cost", None)
             if model_cost is not None and model_cost != litellm.model_cost.get(self.repetition_checker_llm, None):
                 litellm.register_model(model_cost={self.repetition_checker_llm: model_cost})
             response = completion(

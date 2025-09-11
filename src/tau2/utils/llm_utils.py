@@ -200,11 +200,11 @@ def generate(
     llm_args = kwargs.copy()
 
     # Added args for Cerebras
-    model_cost = llm_args.pop("model_cost", None)
+    model_cost = llm_args.pop("litellm_model_cost", None)
     if model_cost is not None and model_cost != litellm.model_cost.get(model, None):
         litellm.register_model(model_cost={model: model_cost})
-    strict = llm_args.pop("strict", False)
-    strict_schemas = llm_args.pop("strict_schemas", False)
+    strict = llm_args.pop("cerebras_strict", False)
+    strict_schemas = llm_args.pop("cerebras_strict_schemas", False)
 
     if llm_args.get("num_retries") is None:
         llm_args["num_retries"] = DEFAULT_MAX_RETRIES
