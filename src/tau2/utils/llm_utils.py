@@ -204,7 +204,7 @@ def generate(
     if model_cost is not None and model_cost != litellm.model_cost.get(model, None):
         litellm.register_model(model_cost={model: model_cost})
     strict = llm_args.pop("cerebras_strict", False)
-    strict_schemas = llm_args.pop("cerebras_strict_schemas", False)
+    refine_schemas = llm_args.pop("cerebras_refine_schemas", False)
 
     if llm_args.get("num_retries") is None:
         llm_args["num_retries"] = DEFAULT_MAX_RETRIES
@@ -213,9 +213,9 @@ def generate(
         llm_args["thinking"] = {"type": "disabled"}
     litellm_messages = to_litellm_messages(messages)
     tools = [tool.openai_schema for tool in tools] if tools else None
-    if tools and (strict or strict_schemas):
+    if tools and (strict or refine_schemas):
         for tool in tools:
-            if strict_schemas:
+            if refine_schemas:
                 tool = _process_schema_objects(tool)
             if strict and "function" in tool:
                 tool["function"]["strict"] = strict
