@@ -11,6 +11,7 @@ from loguru import logger
 
 from tau2.agent.base import BaseAgent, is_valid_agent_history_message
 from tau2.agent.llm_agent import LLMSoloAgent
+from tau2.config import DEFAULT_MAX_RETRIES
 from tau2.data_model.message import (
     AssistantMessage,
     Message,
@@ -553,6 +554,8 @@ Conversation:
 Answer with only "yes" or "no"."""
 
         try:
+            if self.repetition_checker_llm_args.get("num_retries") is None:
+                self.repetition_checker_llm_args["num_retries"] = DEFAULT_MAX_RETRIES
             self.repetition_checker_llm_args.pop("cerebras_strict", None)
             self.repetition_checker_llm_args.pop("cerebras_refine_schemas", None)
             model_cost = self.repetition_checker_llm_args.pop("litellm_model_cost", None)

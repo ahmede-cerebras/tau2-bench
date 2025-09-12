@@ -309,14 +309,20 @@ def _process_schema_objects(schema: dict) -> dict:
     Recursively process schema to find 'type': 'object' fields and:
     1. Set 'additionalProperties' to False if it exists
     2. Inject 'properties': {} if it doesn't exist
+    3. Ensure 'required' field includes all keys in properties
     """
     if isinstance(schema, dict):
         if schema.get("type") == "object":
-            if "additionalProperties" in schema:
-                schema["additionalProperties"] = False
+            schema["additionalProperties"] = False
 
             if "properties" not in schema:
                 schema["properties"] = {}
+            
+            # Ensure required field includes all properties keys
+            if properties := schema.get("properties", {}):
+                existing_required = set(schema.get("required", []))
+                all_properties = set(properties.keys())
+                schema["required"] = list(existing_required | all_properties)
         
         # Recursively process all nested dictionaries
         for key, value in schema.items():
