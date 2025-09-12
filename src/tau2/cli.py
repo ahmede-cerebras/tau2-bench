@@ -111,6 +111,11 @@ def add_run_args(parser):
         help="The path to save the simulation results. Will be saved to data/simulations/<save_to>.json. If not provided, will save to <domain>_<agent>_<user>_<llm_agent>_<llm_user>_<timestamp>.json. If the file already exists, it will try to resume the run.",
     )
     parser.add_argument(
+        "--save-result-metrics",
+        action="store_true",
+        help="Whether to save the result metrics after the simulation.",
+    )
+    parser.add_argument(
         "--max-concurrency",
         type=int,
         default=DEFAULT_MAX_CONCURRENCY,
@@ -127,6 +132,29 @@ def add_run_args(parser):
         type=str,
         default=DEFAULT_LOG_LEVEL,
         help=f"The log level to use for the simulation. Default is {DEFAULT_LOG_LEVEL}.",
+    )
+    parser.add_argument(
+        "--use-repetition-checker",
+        action="store_true",
+        help="Enable LLM-based repetition detection following AA methodology.",
+    )
+    parser.add_argument(
+        "--repetition-checker-threshold",
+        type=int,
+        default=30,
+        help="Size of the rolling window of previous messages to check for repetition. Default is 30.",
+    )
+    parser.add_argument(
+        "--repetition-checker-llm",
+        type=str,
+        default="gpt-4.1",
+        help="The LLM model to use for repetition checking. Default is gpt-4.1.",
+    )
+    parser.add_argument(
+        "--repetition-checker-llm-args",
+        type=json.loads,
+        default=None,
+        help="Arguments to pass to the repetition checker LLM as JSON. Default is '{}'.",
     )
 
 
@@ -154,9 +182,14 @@ def main():
                 max_steps=args.max_steps,
                 max_errors=args.max_errors,
                 save_to=args.save_to,
+                save_result_metrics=args.save_result_metrics,
                 max_concurrency=args.max_concurrency,
                 seed=args.seed,
                 log_level=args.log_level,
+                use_repetition_checker=args.use_repetition_checker,
+                repetition_checker_threshold=args.repetition_checker_threshold,
+                repetition_checker_llm=args.repetition_checker_llm,
+                repetition_checker_llm_args=args.repetition_checker_llm_args,
             )
         )
     )

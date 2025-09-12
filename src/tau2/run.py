@@ -13,7 +13,7 @@ from tau2.data_model.simulation import (AgentInfo, Info, Results, RunConfig,
 from tau2.data_model.tasks import Task
 from tau2.environment.environment import Environment, EnvironmentInfo
 from tau2.evaluator.evaluator import EvaluationType, evaluate_simulation
-from tau2.metrics.agent_metrics import compute_metrics
+from tau2.metrics.agent_metrics import compute_metrics, save_metrics
 from tau2.orchestrator.orchestrator import Orchestrator
 from tau2.registry import RegistryInfo, registry
 from tau2.user.user_simulator import DummyUser, get_global_user_sim_guidelines
@@ -132,8 +132,14 @@ def run_domain(config: RunConfig) -> Results:
         max_concurrency=config.max_concurrency,
         seed=config.seed,
         log_level=config.log_level,
+        use_repetition_checker=config.use_repetition_checker,
+        repetition_checker_threshold=config.repetition_checker_threshold,
+        repetition_checker_llm=config.repetition_checker_llm,
+        repetition_checker_llm_args=config.repetition_checker_llm_args,
     )
     metrics = compute_metrics(simulation_results)
+    if config.save_result_metrics:
+        save_metrics(metrics, save_to.stem)
     ConsoleDisplay.display_agent_metrics(metrics)
 
     return simulation_results
@@ -157,6 +163,10 @@ def run_tasks(
     max_concurrency: int = 1,
     seed: Optional[int] = 300,
     log_level: Optional[str] = "INFO",
+    use_repetition_checker: Optional[bool] = False,
+    repetition_checker_threshold: Optional[int] = 30,
+    repetition_checker_llm: Optional[str] = "gpt-4.1",
+    repetition_checker_llm_args: Optional[dict] = None,
 ) -> Results:
     """
     Runs tasks for a given domain.
@@ -178,6 +188,10 @@ def run_tasks(
         max_concurrency (int): The maximum number of concurrent simulations to run.
         seed (int): The seed to use for the simulation.
         log_level (str): The log level to use.
+        use_repetition_checker (bool): Whether to use LLM-based repetition detection.
+        repetition_checker_threshold (int): Size of the rolling window of previous messages to check for repetition.
+        repetition_checker_llm (str): The LLM model to use for repetition checking.
+        repetition_checker_llm_args (dict): Arguments to pass to the repetition checker LLM.
     Returns:
         The simulation results and the annotations (if llm_review is True).
     """
@@ -324,6 +338,10 @@ def run_tasks(
                 max_errors=max_errors,
                 evaluation_type=evaluation_type,
                 seed=seed,
+                use_repetition_checker=use_repetition_checker,
+                repetition_checker_threshold=repetition_checker_threshold,
+                repetition_checker_llm=repetition_checker_llm,
+                repetition_checker_llm_args=repetition_checker_llm_args,
             )
             simulation.trial = trial
             if console_display:
@@ -367,6 +385,10 @@ def run_task(
     max_errors: int = 10,
     evaluation_type: EvaluationType = EvaluationType.ALL,
     seed: Optional[int] = None,
+    use_repetition_checker: Optional[bool] = False,
+    repetition_checker_threshold: Optional[int] = 30,
+    repetition_checker_llm: Optional[str] = "gpt-4.1",
+    repetition_checker_llm_args: Optional[dict] = None,
 ) -> SimulationRun:
     """
     Runs tasks for a given domain.
@@ -385,6 +407,10 @@ def run_task(
          max_errors (int): The maximum number of errors to allow in the simulation.
          evaluation_type (EvaluationType): The type of evaluation to use.
          seed (int): The seed to use for the simulation.
+         use_repetition_checker (bool): Whether to use LLM-based repetition detection.
+         repetition_checker_threshold (int): Size of the rolling window of previous messages to check for repetition.
+         repetition_checker_llm (str): The LLM model to use for repetition checking.
+         repetition_checker_llm_args (dict): Arguments to pass to the repetition checker LLM.
      Returns:
          The simulation run.
     """
@@ -443,6 +469,9 @@ def run_task(
             "Dummy user can only be used with solo agent"
         )
 
+    if repetition_checker_llm_args is None:
+        repetition_checker_llm_args = {}
+    
     user = UserConstructor(
         tools=user_tools,
         instructions=str(task.user_scenario),
@@ -460,6 +489,10 @@ def run_task(
         max_errors=max_errors,
         seed=seed,
         solo_mode=solo_mode,
+        use_repetition_checker=use_repetition_checker,
+        repetition_checker_threshold=repetition_checker_threshold,
+        repetition_checker_llm=repetition_checker_llm,
+        repetition_checker_llm_args=repetition_checker_llm_args,
     )
     simulation = orchestrator.run()
 

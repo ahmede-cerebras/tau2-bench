@@ -196,13 +196,29 @@ def generate(
 
     Returns: A tuple containing the message and the cost.
     """
-    if kwargs.get("num_retries") is None:
-        kwargs["num_retries"] = DEFAULT_MAX_RETRIES
+    # Make a copy of kwargs for LLM arguments
+    llm_args = kwargs.copy()
+
+    # Added args for Cerebras
+    model_cost = llm_args.pop("litellm_model_cost", None)
+    if model_cost is not None and model_cost != litellm.model_cost.get(model, None):
+        litellm.register_model(model_cost={model: model_cost})
+    strict = llm_args.pop("cerebras_strict", False)
+    refine_schemas = llm_args.pop("cerebras_refine_schemas", False)
+
+    if llm_args.get("num_retries") is None:
+        llm_args["num_retries"] = DEFAULT_MAX_RETRIES
 
     if model.startswith("claude") and not ALLOW_SONNET_THINKING:
-        kwargs["thinking"] = {"type": "disabled"}
+        llm_args["thinking"] = {"type": "disabled"}
     litellm_messages = to_litellm_messages(messages)
     tools = [tool.openai_schema for tool in tools] if tools else None
+    if tools and (strict or refine_schemas):
+        for tool in tools:
+            if refine_schemas:
+                tool = _process_schema_objects(tool)
+            if strict and "function" in tool:
+                tool["function"]["strict"] = strict
     if tools and tool_choice is None:
         tool_choice = "auto"
     try:
@@ -211,7 +227,7 @@ def generate(
             messages=litellm_messages,
             tools=tools,
             tool_choice=tool_choice,
-            **kwargs,
+            **llm_args,
         )
     except Exception as e:
         logger.error(e)
@@ -287,3 +303,29 @@ def get_token_usage(messages: list[Message]) -> dict:
         usage["completion_tokens"] += message.usage["completion_tokens"]
         usage["prompt_tokens"] += message.usage["prompt_tokens"]
     return usage
+
+def _process_schema_objects(schema: dict) -> dict:
+    """
+    Recursively process schema to find 'type': 'object' fields and:
+    1. Set 'additionalProperties' to False if it exists
+    2. Inject 'properties': {} if it doesn't exist
+    """
+    if isinstance(schema, dict):
+        if schema.get("type") == "object":
+            if "additionalProperties" in schema:
+                schema["additionalProperties"] = False
+
+            if "properties" not in schema:
+                schema["properties"] = {}
+        
+        # Recursively process all nested dictionaries
+        for key, value in schema.items():
+            if isinstance(value, dict):
+                schema[key] = _process_schema_objects(value)
+            elif isinstance(value, list):
+                schema[key] = [
+                    _process_schema_objects(item) if isinstance(item, dict) else item
+                    for item in value
+                ]
+    
+    return schema
